@@ -22,6 +22,9 @@ libOSC.prototype.createOSCMsg = function(address,typeArray,valueArray){
         } else if(typeArray[i] == "s"){
             // string
             byteArray = this.pushString(byteArray,valueArray[i]);
+        } else if(typeArray[i] == "h"){
+            // BigInt
+            byteArray = byteArray.concat(valueArray[i].toByteArray());
         }
     }
 
@@ -112,9 +115,7 @@ libOSC.prototype.parseOSCMsg = function(message){
 
     result.values = tempResult;
 
-    // for now just log results
-    return result;
-    
+    return result;    
 };
 
 libOSC.prototype.align = function(index){
@@ -163,7 +164,14 @@ libOSC.prototype.parseValues = function(message,currentIndex,typeFlags){
             results[i] = this.floatFromBytes(message,currentIndex,currentIndex+4);
             currentIndex = this.align(currentIndex);
             
+        } else if(flag == "h"){ // 64 Bit int
+            var int64 =  new BigInt();
+            int64.fromByteArray(message.slice(currentIndex,currentIndex + 8));
+            results[i] = int64;
+            currentIndex = this.align(this.align(currentIndex));
+
         }else{
+            console.log(flag);
             //TODO 
             //rest of parsing see specifications on osc website
         }
