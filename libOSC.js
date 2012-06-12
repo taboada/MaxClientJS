@@ -1,6 +1,7 @@
-function libOSC(){
+function libOSC(bc){
     this.KOMMA = 44;
     this.ZERO = 0;
+    this.byteConverter = bc;
 };
 
 /** ----- CREATE OSC MSG TO OUTPUT ----- **/
@@ -8,28 +9,32 @@ function libOSC(){
 libOSC.prototype.createOSCMsg = function(address,typeArray,valueArray){
     var byteArray = [];
 
-    byteArray = this.pushString(byteArray,address);
+    byteArray = this.concatAndAlign(byteArray,this.byteConverter.stringToByte(address));
     byteArray.push(this.KOMMA);
-    byteArray = this.pushString(byteArray,typeArray.join(""));
+    byteArray = this.concatAndAlign(byteArray,this.byteConverter.stringToByte(typeArray.join("")));
 
     for(var i = 0; i < typeArray.length; i++){
         if(typeArray[i] == "i"){
             // 32 bit int
-            byteArray = this.pushInt(byteArray,valueArray[i]);
+            byteArray = byteArray.concat(this.byteConverter.int32ToByte(valueArray[i]));
         } else if(typeArray[i] == "f"){
             // 32 bit float
-            byteArray = this.pushFloat(byteArray,valueArray[i]);
+            byteArray = byteArray.concat(this.byteConverter.float32ToByte(valueArray[i]));
         } else if(typeArray[i] == "s"){
             // string
-            byteArray = this.pushString(byteArray,valueArray[i]);
+            byteArray = this.concatAndAlign(byteArray,this.byteConverter.stringToByte(valueArray[i]));
         } else if(typeArray[i] == "h"){
             // BigInt
-            byteArray = byteArray.concat(valueArray[i].toByteArray());
+            byteArray = byteArray.concat(this.byteConverter.int64ToByte(valueArray[i]));
         }
     }
-
     return byteArray;
 };
+
+libOSC.prototype.concatAndAlign = function(baseArray,scndArray){
+    baseArray = baseArray.concat(scndArray);
+    return this.fillToFour(baseArray);
+}
 
 libOSC.prototype.fillToFour = function(array){
     for(var needPadding = array.length % 4;needPadding < 4; needPadding++){
@@ -38,80 +43,31 @@ libOSC.prototype.fillToFour = function(array){
     return array;
 };
 
-// push a given string to a given array
-libOSC.prototype.pushString = function (array,string){
-    for(var i = 0; i < string.length; i++){
-        array.push(string.charCodeAt(i));
-    }
-    return this.fillToFour(array);
-};
-
-libOSC.prototype.pushInt = function (array,value){
-    var arrayLength = array.length;
-    for(var j = 3; j >= 0; --j){
-        temp = (value & 255);
-        value = value >> 8;
-        array[arrayLength + j] = temp;
-    }
-    return array;
-};
-
-libOSC.prototype.pushFloat = function(array,value){
-    array = this.pushInt(array,this.float_to_bits(value));
-    return array;
-};
-
-libOSC.prototype.float_to_bits = function(f){
-    var sign_bit = (f < 0) ? 1 : 0;
-    var exp_temp = 0;
-    var exponent = 0;
-    var mantissa = 0;
-    var man_temp = 0;
-    var bits_as_int = 0;
-    
-    f = Math.abs(f);
-    
-    if (f >= 1) {
-        exp_temp = Math.log(f) / Math.log(2);
-        exp_temp = Math.floor(exp_temp);
-    } else {
-        exp_temp = Math.log(1/f) / Math.log(2);
-        exp_temp = - Math.floor(exp_temp);
-    }
-    
-    exponent = exp_temp + 127;
-    man_temp = f * (1 << (23 - exp_temp));
-    mantissa = Math.floor(man_temp);
-    
-    bits_as_int = (sign_bit << 31) |(exponent << 23)| (mantissa & ((1 << 23) - 1));
-
-    return bits_as_int;
-};
 
 /** ----- PARSE INCOMING OSC MESSAGES ----- **/
 
 libOSC.prototype.parseOSCMsg = function(message){
 
-    // initiliaze result & index counter
+    // initiliaze result & index offset
     var result = {};
-    var currentIndex = 0;
+    var offset = 0;
 
     // read in address pattern
-    var tempResult = this.parseAddressPattern(message, currentIndex);
+    var tempResult = this.parseAddressPattern(message, offset);
 
-    currentIndex = tempResult.index;
-    currentIndex = this.align(currentIndex);
+    offset = tempResult.index;
+    offset = this.align(offset);
     result.address = tempResult.result;
 
     // read in typeflags
-    tempResult = this.parseTypeFlags(message,currentIndex);
+    tempResult = this.parseTypeFlags(message,offset);
 
-    currentIndex = tempResult.index;
-    currentIndex = this.align(currentIndex);
+    offset = tempResult.index;
+    offset = this.align(offset);
     result.typeFlags = tempResult.typeFlags;
 
     // read in values
-    tempResult =  this.parseValues(message,currentIndex,result.typeFlags);
+    tempResult = this.parseValues(message,offset,result.typeFlags);
 
     result.values = tempResult;
 
@@ -122,28 +78,28 @@ libOSC.prototype.align = function(index){
     return index + 4 - (index %4);
 };
 
-libOSC.prototype.parseAddressPattern = function(message, currentIndex){
-    return this.stringFromBytes(message,currentIndex);
+libOSC.prototype.parseAddressPattern = function(message, offset){
+    return this.byteConverter.stringFromBytes(message,offset);
 
 };
 
-libOSC.prototype.parseTypeFlags = function(message, currentIndex){
+libOSC.prototype.parseTypeFlags = function(message, offset){
     var result = new Array();
     var currentChar = -1;
 
-    if(message[currentIndex] == this.KOMMA){
-        currentIndex += 1;
+    if(message[offset] == this.KOMMA){
+        offset += 1;
 
         while(currentChar != this.ZERO){
-            result.push(String.fromCharCode(message[currentIndex]));
-            currentIndex += 1;
-            currentChar = message[currentIndex];
+            result.push(String.fromCharCode(message[offset]));
+            offset += 1;
+            currentChar = message[offset];
         }
-        return {"typeFlags" : result, "index" : currentIndex};
+        return {"typeFlags" : result, "index" : offset};
     }
 };
 
-libOSC.prototype.parseValues = function(message,currentIndex,typeFlags){
+libOSC.prototype.parseValues = function(message,offset,typeFlags){
     var results =  new Array(typeFlags.length);
     var currentChar = -1;
 
@@ -151,109 +107,30 @@ libOSC.prototype.parseValues = function(message,currentIndex,typeFlags){
         var flag = typeFlags[i];
 
         if(flag == "i"){ // 32 bit int
-            results[i] = (this.intFromBytes(message,currentIndex,currentIndex+4));
-            currentIndex = this.align(currentIndex);
+            results[i] = this.byteConverter.int32FromBytes(message,offset);
+             offset = offset + 4;
 
         } else if(flag == "s"){// string
-            var tempStringResult = this.stringFromBytes(message,currentIndex);
+            var tempStringResult = this.byteConverter.stringFromBytes(message,offset);
             results[i] = tempStringResult.result;
-            currentIndex = tempStringResult.index;
-            currentIndex = this.align(currentIndex);
+            offset = tempStringResult.index;
+            offset = this.align(offset);
 
         } else if(flag == "f"){ // 32 bit float
-            results[i] = this.floatFromBytes(message,currentIndex,currentIndex+4);
-            currentIndex = this.align(currentIndex);
+            results[i] = this.byteConverter.float32FromBytes(message,offset);
+            offset = offset + 4;
             
         } else if(flag == "h"){ // 64 Bit int
-            var int64 =  new BigInt();
-            int64.fromByteArray(message.slice(currentIndex,currentIndex + 8));
-            results[i] = int64;
-            currentIndex = this.align(this.align(currentIndex));
+            results[i] = this.byteConverter.int64FromBytes(message,offset);
+            offset = offset + 8;
 
         }else{
             console.log(flag);
             //TODO 
             //rest of parsing see specifications on osc website
         }
-    }
-        
+    }   
     return results;
 };
 
-libOSC.prototype.stringFromBytes = function(message,currentIndex){
-    var result = "";
-    var currentChar = -1;
 
-    while(currentChar != this.ZERO){
-        result += String.fromCharCode(message[currentIndex]);
-        currentIndex += 1;
-        currentChar = message[currentIndex];
-    }
-    return {"result" : result, "index" : currentIndex};
-};
-
-libOSC.prototype.intFromBytes = function(message,firstIndex,secondIndex){
-    var result = 0;
-    for (var i = firstIndex; i < secondIndex;i++){        
-        result += message[i];       
-        if (i < secondIndex-1) {
-            result = result << 8;
-        }
-    }
-    return result;
-};
-
-libOSC.prototype.floatFromBytes = function(array,firstIndex,secondIndex){
-    var byteArray = new Array();
-    for(var i = firstIndex; i < secondIndex; i++){
-        byteArray.push(array[i]);
-    }
-    return (this.parseSign(byteArray) * this.parseExponent(byteArray) * this.parseSignificand(byteArray)).toFixed(6);
-};
-
-libOSC.prototype.parseSign = function (byteArray){
-    if(byteArray[0] & 0x80){
-        return -1;
-    }
-    return 1;
-};
-
-libOSC.prototype.parseExponent = function parseExponent(byteArray){
-    var ex = (byteArray[0] & 0x7F) << 1;            
-    if(0 != (byteArray[1] & 0x80)){
-        ex += 0x01;
-    }
-    
-    ex = Math.pow(2, ex-127);
-    return ex;
-};
-
-libOSC.prototype.parseSignificand = function(byteArray){
-    var num = 0;
-    var bit;
-
-    var mask = 0x40;
-    for(var i = 1; i < 8; i++){
-        if(0 != (byteArray[1] & mask)){ 
-            num += 1 / Math.pow(2, i);
-        }
-        mask = mask >> 1;
-    }
-
-    mask = 0x80;
-    for(var j = 0; j < 8; j++){
-        if(0 != (byteArray[2] & mask)){
-            num += 1 / Math.pow(2, j + 8);
-        }
-        mask = mask >> 1;
-    }
-
-    mask = 0x80;
-    for(var k = 0; k < 8; k++){
-        if(0 != (byteArray[2] & mask)){
-            num += 1 / Math.pow(2, k + 16);
-        }
-        mask = mask >> 1;
-    }
-    return (num+1);
-};

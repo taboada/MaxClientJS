@@ -2,7 +2,8 @@ function MaxCommunication(socketHost,udpPort){
 	this.socket = new Websocket(socketHost);
 	this.udpPort = udpPort;
 	this.controls = {};
-	this.oscLib = new libOSC();
+	this.byteConverter = new ByteConverter();
+	this.oscLib = new libOSC(this.byteConverter);
 
 	this.instantiateSocket(this.oscLib,this.controls); 			// workaround in order to pass instance variables to socket object
 	this.setDefaultBehaviour(function(msg){console.log(msg);}); // if no default function is set just log the entire msg to the console
@@ -84,6 +85,7 @@ MaxCommunication.prototype.sendFloatsToMax = function(address,valueArray){
 	}
 	this.sendMsgToMax(address,typeArray,valueArray);
 };
+
 
 
 
