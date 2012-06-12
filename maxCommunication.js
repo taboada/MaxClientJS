@@ -1,4 +1,4 @@
-function MaxCommunication(socketHost,udpPort){
+var MaxCommunication = function(socketHost,udpPort){
 	this.socket = new Websocket(socketHost);
 	this.udpPort = udpPort;
 	this.controls = {};

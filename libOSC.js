@@ -1,4 +1,4 @@
-function libOSC(bc){
+var libOSC = function(bc){
     this.KOMMA = 44;
     this.ZERO = 0;
     this.byteConverter = bc;

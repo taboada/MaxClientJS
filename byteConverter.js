@@ -1,4 +1,4 @@
-function ByteConverter(){	
+var ByteConverter = function(){	
     this.ZERO = 0;
 }
 
