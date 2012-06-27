@@ -27,12 +27,17 @@ var maxCommunicator = new MaxCommunication("http://localhost:8080",50000);
 ```
 
 Now you can access the communication functionality of the maxCommunicator object.
-There are two main categories.
+There are two main categories:
 
 ### Communication with Max (using server as a bridge)
 
 The library allows you to send single and multiple primitive values to Max as OSC messages as well as more complex OSC messages.
+Every message send to the socket.io server is named as "max" and has the following structure:
 
+```js
+message.port // the UDP port to which the message should be forwarded
+message.mssg // the OSC message as a byte array 
+```
 Send a single value using an OSC address pattern as the first and the message itself as the second parameter.
 
 ```js
@@ -55,6 +60,36 @@ To send a message to Max that contains an integer, a float and a string you have
 
 ```js
 maxCommunicator.sendMsgToMax("address",["i","f","s"],[42,4.2,"message"]);
+```
+
+In order to receive messages from Max the socket.io server should any messages that are received from Max via UDP.
+If you are using node.js take a look at my module for node.js in order to realize that easily.
+If you are using a different server make sure that you send messages from Max with the message name "max" so that they will be handled the right way using this library.
+
+Every received "max" messages is parsed as an OSC message and by default printed to the console. If you want to change the default behaviour of a MaxCommunication instance, you can do this as the following:
+
+```js
+maxCommunicator.setDefaultBehaviour(function(oscMsg){
+	// in here you have access to the received OSC message as a parameter
+
+	// oscMsg.address gives you the address string
+	// oscMsg.typeFlags gives you an array containing the message type definition flags
+	// oscMsg.values gives you an array containing the values of the OSC message
+	
+	console.log(oscMsg);
+});
+```
+
+Furthermore you can set specific handlers for different address patterns of the incoming OSC messages.
+If a handler is specified for the incoming address the default behaviour won't be executed.
+Any defined handler gets two parameters when called. The first one is an array of received type flags, while the second parameter contains an array of the received values.
+
+```js
+maxCommunicator.addMaxMsgHandler("address1",function(flags,values){
+	console.log("Received message address1 message");
+	console.log("type flags: " + flags);
+	console.log("values: " + values);
+});
 ```
 
 ### Communication with the Socket.io server only (no message forwarding to Max)
