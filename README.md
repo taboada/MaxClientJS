@@ -22,7 +22,7 @@ First import the js files in order to make usable on client side.
 As this library is meant to work with socket.io make sure that the client also has access to the socket.io library by importing the necessary files.
 If you use node.js with installed socket.io as a server this can f.e. be done using the following:
 
-```js
+```html
 <script type="text/javascript" src="../socket.io/socket.io.js"></script>
 ```
 
