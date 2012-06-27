@@ -19,6 +19,8 @@ First import the js files in order to make usable on client side.
 <script type="text/javascript" src="maxCommunication.js"></script>
 ```
 
+As this library is meant to work with socket.io make sure that the client also has access to the socket.io library by importing the necessary files.
+
 After importing you have to create a new instance of MaxCommunicator in order to access the functionality provided by this library. Creating this instance is done by passing the Socket.io address and the UDP port on which Max is listening to as parameters. Remember that you define the UDP receiving port in Max using the updreceive object.
 In the following example the socket.io host is localhost on port 8080 and Max is listening on port 50000
 
