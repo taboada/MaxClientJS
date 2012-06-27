@@ -86,13 +86,32 @@ Any defined handler gets two parameters when called. The first one is an array o
 
 ```js
 maxCommunicator.addMaxMsgHandler("address1",function(flags,values){
-	console.log("Received message address1 message");
+	console.log("Received message for address1");
 	console.log("type flags: " + flags);
 	console.log("values: " + values);
 });
 ```
 
 ### Communication with the Socket.io server only (no message forwarding to Max)
+
+The following functionality can be used in order to communicate with the server only all the messages are not sent to Max and can f.e. be used in order to keep multiple clients synchronized.
+
+Sending a message to the server can be done by passing the name of the message as the first parameter and the data as the second.
+It is also possible to send complex JSON data using this.
+The name of the message can be used on the server side in order to identify the message and execute a specific functionality.
+
+```js
+maxCommunicator.sendMsgToServer("testMessage",12);
+maxCommunicator.sendMsgToServer("testMessage",{"user" : 1, "color" : "#FFFFFF"});
+```
+
+In order to receive messages from the server and to avoid the OSC parsing that won't be necessary simply add handlers to the instance of MaxCommunication.
+
+```js
+maxCommunicator.receiveMsgFromServer("testMessage",function(data){
+	users[data.user].color = data.color;
+});
+```
 
 
 ## Example
