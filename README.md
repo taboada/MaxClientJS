@@ -32,7 +32,7 @@ There are two main categories:
 ### Communication with Max (using server as a bridge)
 
 The library allows you to send single and multiple primitive values to Max as OSC messages as well as more complex OSC messages.
-Every message send to the socket.io server is named as "max" and has the following structure:
+Every OSC message send to the socket.io server is named as "max" and has the following structure:
 
 ```js
 message.port // the UDP port to which the message should be forwarded
