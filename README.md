@@ -18,12 +18,46 @@ First import the js files in order to make usable on client side.
 <script type="text/javascript" src="websocket.js"></script>
 <script type="text/javascript" src="maxCommunication.js"></script>
 ```
-After importing you have to create a new instance of MaxCommunicator in order to access the functionality provided by this library:
 
-```html
+After importing you have to create a new instance of MaxCommunicator in order to access the functionality provided by this library. Creating this instance is done by passing the Socket.io address and the UDP port on which Max is listening to as parameters. Remember that you define the UDP receiving port in Max using the updreceive object.
+In the following example the socket.io host is localhost on port 8080 and Max is listening on port 50000
+
+```js
 var maxCommunicator = new MaxCommunication("http://localhost:8080",50000);
 ```
 
+Now you can access the communication functionality of the maxCommunicator object.
+There are two main categories.
+
+### Communication with Max (using server as a bridge)
+
+The library allows you to send single and multiple primitive values to Max as OSC messages as well as more complex OSC messages.
+
+Send a single value using an OSC address pattern as the first and the message itself as the second parameter.
+
+```js
+maxCommunicator.sendStringToMax("address","message");
+maxCommunicator.sendIntToMax("address",42);
+maxCommunicator.sendFloatToMax("address",4.2);
+```
+
+Send multiple values of the same type in a single OSC Message using the OSC address pattern as the first and an array of values as the second parameter.
+
+```js
+maxCommunicator.sendStringsToMax("address",["message1","message2","message3"]);
+maxCommunicator.sendIntsToMax("address",[42,420,4200]);
+maxCommunicator.sendFloatsToMax("address",[4.2,2.4,42.42]);
+```
+
+Sending a more complex message is done by defining the types yourself. This is done according to the Opensoundcontrol specification. These library currently only supports 32-bit integer (i), 32-bit float (f) and string (s) values.
+
+To send a message to Max that contains an integer, a float and a string you have to pass the type definitin array for the specific message as the second parameter.
+
+```js
+maxCommunicator.sendMsgToMax("address",["i","f","s"],[42,4.2,"message"]);
+```
+
+### Communication with the Socket.io server only (no message forwarding to Max)
 
 
 ## Example
