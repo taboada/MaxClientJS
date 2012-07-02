@@ -1,9 +1,9 @@
 var MaxCommunication = function(socketHost,udpPort){
-	this.socket = new Websocket(socketHost);
+	this.socket = Websocket.getInstance({'host' : socketHost});
 	this.udpPort = udpPort;
 	this.controls = {};
-	this.byteConverter = new ByteConverter();
-	this.oscLib = new libOSC(this.byteConverter);
+	this.byteConverter = ByteConverter.getInstance();
+	this.oscLib = LibOSC.getInstance();
 
 	this.instantiateSocket(this.oscLib,this.controls); 			// workaround in order to pass instance variables to socket object
 	this.setDefaultBehaviour(function(msg){console.log(msg);}); // if no default function is set just log the entire msg to the console

@@ -1,16 +1,31 @@
-var Websocket = function(socketHost){
-	this.socketHost = socketHost;
-	this.socket = io.connect(socketHost);
+var Websocket = (function(){
+	var instantiated;
 
-	this.socket.on('connected',function(data){
-		console.log(data.connected);
-	})
-};
+	function init(options){
+		var socket = io.connect(options.host);
+		socket.on('connected',function(data){
+			console.log(data.connected);
+		});
 
-Websocket.prototype.receiveMsg = function(msgName,action){
-	this.socket.on(msgName,action);
-};
+		return {
 
-Websocket.prototype.sendMsg = function(methodType,data){
-	this.socket.emit(methodType,data);
-};
+			receiveMsg : function(msgName,action){
+				socket.on(msgName,action); 
+			},
+			sendMsg : function(methodType,data){
+				socket.emit(methodType,data);
+			}
+		}
+	}
+
+	// EMULATE SINGLETON BEHAVIOUR
+	return {
+		getInstance : function(options){
+			if (!instantiated){
+				instantiated = init(options);
+			}
+			return instantiated; 
+		}
+	}
+
+})();
