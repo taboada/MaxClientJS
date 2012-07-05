@@ -99,7 +99,7 @@ var ByteConverter = (function(){
             return (num+1);
         }
 
-
+        // PUBLIC FUNCTIONS
         return{
 
             stringToByte : function(string){
@@ -156,6 +156,7 @@ var ByteConverter = (function(){
         }
     }
 
+    // SINGLETON BEHAVIOUR
     return {
         getInstance : function(){
             if (!instantiated){

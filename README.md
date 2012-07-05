@@ -26,11 +26,17 @@ If you use node.js with installed socket.io as a server this can f.e. be done us
 <script type="text/javascript" src="../socket.io/socket.io.js"></script>
 ```
 
-After importing you have to create a new instance of MaxCommunicator in order to access the functionality provided by this library. Creating this instance is done by passing the Socket.io address and the UDP port on which Max is listening to as parameters. Remember that you define the UDP receiving port in Max using the updreceive object.
-In the following example the socket.io host is localhost on port 8080 and Max is listening on port 50000
+After importing you have to create a new instance of MaxCommunicator in order to access the functionality provided by this library. Creating this instance is done by passing the Socket.io address and the UDP port on which Max is listening to as as options. It is important that you use the exact same keys ('socketHost' & 'udpPort').
+Remember that you define the UDP receiving port in Max using the updreceive object.
+In the following example the socket.io host is localhost on port 8080 and Max is listening on port 50000.
+The MaxCommunication instance is designed as a Singleton. Therefore only one instance can be created per project.
+In order to do this use the following as an example
 
 ```js
-var maxCommunicator = new MaxCommunication("http://localhost:8080",50000);
+var maxCommunicator = new MaxCommunication.getInstance({
+						'socketHost' : "http://localhost:8080"
+						, 'udpPort' : 50000
+					});
 ```
 
 Now you can access the communication functionality of the maxCommunicator object.

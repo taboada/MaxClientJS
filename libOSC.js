@@ -77,7 +77,7 @@ var LibOSC = (function(){
             return results;
         }
 
-
+        // PUBLIC FUNCTIONS
         return {
             createOSCMsg : function(address,typeArray,valueArray){
                 var byteArray = [];
@@ -130,7 +130,7 @@ var LibOSC = (function(){
         }
     }
 
-    // EMULATE SINGLETON BEHAVIOUR
+    // SINGLETON BEHAVIOUR
     return {
         getInstance : function(){
             if (!instantiated){
