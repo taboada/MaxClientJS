@@ -52,51 +52,42 @@ var ByteConverter = (function(){
             return bits_as_int;
         }
 
-        function parseSign(byteArray){
-            if(byteArray[0] & 0x80){
-                return -1;
-            }
-            return 1;
-        }
+        function parseFloat(bytes) {
 
-        function parseExponent(byteArray){
-            var ex = (byteArray[0] & 0x7F) << 1;            
-            if(0 != (byteArray[1] & 0x80)){
-                ex += 0x01;
-            }
-            
-            ex = Math.pow(2, ex-127);
-            return ex;
-        }
-
-       function parseSignificand(byteArray){
-            var num = 0;
-            var bit;
-
-            var mask = 0x40;
-            for(var i = 1; i < 8; i++){
-                if(0 != (byteArray[1] & mask)){ 
-                    num += 1 / Math.pow(2, i);
+            var binary = "";
+            var bits;
+            for(var i = 0; i < 4; i++) {
+                bits = bytes[i].toString(2);
+                while (bits.length < 8){ 
+                    bits = "0" + bits;
                 }
-                mask = mask >> 1;
+                binary += bits;
             }
 
-            mask = 0x80;
-            for(var j = 0; j < 8; j++){
-                if(0 != (byteArray[2] & mask)){
-                    num += 1 / Math.pow(2, j + 8);
-                }
-                mask = mask >> 1;
+            var sign = (binary.charAt(0) == '1')?-1:1;
+            var exponent = parseInt(binary.substr(1,8),2) - 127;
+            var significandBase = binary.substr(1+8,23);
+            var significandBin = '1'+significandBase;
+            var i = 0;
+            var val = 1;
+            var significand = 0;
+
+            if (exponent == -127){
+              if (significandBase.indexOf('1') == -1){
+                  return 0;
+              }else{
+                  exponent = -126;
+                  significandBin = '0'+significandBase;
+              }
             }
 
-            mask = 0x80;
-            for(var k = 0; k < 8; k++){
-                if(0 != (byteArray[2] & mask)){
-                    num += 1 / Math.pow(2, k + 16);
-                }
-                mask = mask >> 1;
+            while (i < significandBin.length) {
+              significand += val * parseInt(significandBin.charAt(i));
+              val = val / 2;
+              i++;
             }
-            return (num+1);
+
+            return sign * significand * Math.pow(2, exponent);
         }
 
         // PUBLIC FUNCTIONS
@@ -147,11 +138,7 @@ var ByteConverter = (function(){
                 return result;
             },
             float32FromBytes : function(array,offset){
-                var byteArray = new Array();
-                for(var i = offset; i <= offset + 3; i++){
-                    byteArray.push(array[i]);
-                }
-                return (parseSign(byteArray) * parseExponent(byteArray) * parseSignificand(byteArray));
+                return parseFloat(array.slice(offset,offset+4));
             }
         }
     }
