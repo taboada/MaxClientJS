@@ -148,10 +148,10 @@ var ByteConverter = (function(){
             },
             float32FromBytes : function(array,offset){
                 var byteArray = new Array();
-                for(var i = offset; i < offset + 3; i++){
+                for(var i = offset; i <= offset + 3; i++){
                     byteArray.push(array[i]);
                 }
-                return (parseSign(byteArray) * parseExponent(byteArray) * parseSignificand(byteArray)).toFixed(6);
+                return (parseSign(byteArray) * parseExponent(byteArray) * parseSignificand(byteArray));
             }
         }
     }
